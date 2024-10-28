@@ -1,117 +1,169 @@
 import javax.swing.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.awt.*;
 import java.util.ArrayList;
 
-
 class Student {
-    String name;
-    String email;
+    private String id;
+    private String name;
 
-    public Student(String name, String email) {
+    public Student(String id, String name) {
+        this.id = id;
         this.name = name;
-        this.email = email;
+    }
+
+    public String getId() { return id; }
+    public String getName() { return name; }
+
+    @Override
+    public String toString() {
+        return id + " - " + name;
     }
 }
 
 class Course {
-    String title;
-    ArrayList<Student> enrolledStudents;
+    private String code;
+    private String title;
 
-    public Course(String title) {
+    public Course(String code, String title) {
+        this.code = code;
         this.title = title;
-        this.enrolledStudents = new ArrayList<>();
     }
 
-    public void enrollStudent(Student student) {
-        enrolledStudents.add(student);
+    public String getCode() { return code; }
+    public String getTitle() { return title; }
+
+    @Override
+    public String toString() {
+        return code + " - " + title;
     }
 }
 
+class Enrollment {
+    private Student student;
+    private Course course;
+
+    public Enrollment(Student student, Course course) {
+        this.student = student;
+        this.course = course;
+    }
+
+    public Student getStudent() { return student; }
+    public Course getCourse() { return course; }
+
+    @Override
+    public String toString() {
+        return student.getName() + " enrolled in " + course.getTitle();
+    }
+}
 
 public class StudentManagementSystem {
-    private ArrayList<Student> students;
-    private ArrayList<Course> courses;
+    private ArrayList<Student> students = new ArrayList<>();
+    private ArrayList<Course> courses = new ArrayList<>();
+    private ArrayList<Enrollment> enrollments = new ArrayList<>();
+
+    private JTextField studentIdField;
+    private JTextField studentNameField;
+    private JTextField courseCodeField;
+    private JTextField courseTitleField;
+    private JTextArea displayArea;
 
     public StudentManagementSystem() {
-        students = new ArrayList<>();
-        courses = new ArrayList<>();
-    }
-
-    // Method to add student
-    public void addStudent(String name, String email) {
-        Student student = new Student(name, email);
-        students.add(student);
-    }
-
-
-    public void addCourse(String title) {
-        Course course = new Course(title);
-        courses.add(course);
-    }
-
-
-    public void enrollStudent(String studentName, String courseTitle) {
-        for (Course course : courses) {
-            if (course.title.equals(courseTitle)) {
-                for (Student student : students) {
-                    if (student.name.equals(studentName)) {
-                        course.enrollStudent(student);
-                        return;
-                    }
-                }
-            }
-        }
-    }
-
-    // GUI Setup
-    public void createAndShowGUI() {
         JFrame frame = new JFrame("Student Management System");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setSize(400, 300);
+        frame.setSize(400, 400);
+        frame.setLayout(new FlowLayout());
 
-        JPanel panel = new JPanel();
-        frame.add(panel);
-        placeComponents(panel);
+        studentIdField = new JTextField(10);
+        studentNameField = new JTextField(10);
+        courseCodeField = new JTextField(10);
+        courseTitleField = new JTextField(10);
+        displayArea = new JTextArea(10, 30);
+        displayArea.setEditable(false);
+
+        JButton registerStudentButton = new JButton("Register Student");
+        JButton addCourseButton = new JButton("Add Course");
+        JButton enrollButton = new JButton("Enroll Student");
+
+        registerStudentButton.addActionListener(e -> registerStudent());
+        addCourseButton.addActionListener(e -> addCourse());
+        enrollButton.addActionListener(e -> enrollStudent());
+
+        frame.add(new JLabel("Student ID:"));
+        frame.add(studentIdField);
+        frame.add(new JLabel("Student Name:"));
+        frame.add(studentNameField);
+        frame.add(registerStudentButton);
+
+        frame.add(new JLabel("Course Code:"));
+        frame.add(courseCodeField);
+        frame.add(new JLabel("Course Title:"));
+        frame.add(courseTitleField);
+        frame.add(addCourseButton);
+
+        frame.add(enrollButton);
+        frame.add(new JScrollPane(displayArea));
 
         frame.setVisible(true);
     }
 
-    private void placeComponents(JPanel panel) {
-        panel.setLayout(null);
+    private void registerStudent() {
+        String id = studentIdField.getText();
+        String name = studentNameField.getText();
+        if (!id.isEmpty() && !name.isEmpty()) {
+            students.add(new Student(id, name));
+            displayArea.append("Registered Student: " + name + "\n");
+            studentIdField.setText("");
+            studentNameField.setText("");
+        } else {
+            JOptionPane.showMessageDialog(null, "Please enter both ID and Name.");
+        }
+    }
 
-        JLabel nameLabel = new JLabel("Name:");
-        nameLabel.setBounds(10, 20, 80, 25);
-        panel.add(nameLabel);
+    private void addCourse() {
+        String code = courseCodeField.getText();
+        String title = courseTitleField.getText();
+        if (!code.isEmpty() && !title.isEmpty()) {
+            courses.add(new Course(code, title));
+            displayArea.append("Added Course: " + title + "\n");
+            courseCodeField.setText("");
+            courseTitleField.setText("");
+        } else {
+            JOptionPane.showMessageDialog(null, "Please enter both Code and Title.");
+        }
+    }
 
-        JTextField nameText = new JTextField(20);
-        nameText.setBounds(100, 20, 165, 25);
-        panel.add(nameText);
+    private void enrollStudent() {
+        String studentId = studentIdField.getText();
+        String courseCode = courseCodeField.getText();
 
-        JLabel emailLabel = new JLabel("Email:");
-        emailLabel.setBounds(10, 50, 80, 25);
-        panel.add(emailLabel);
+        Student student = findStudent(studentId);
+        Course course = findCourse(courseCode);
 
-        JTextField emailText = new JTextField(20);
-        emailText.setBounds(100, 50, 165, 25);
-        panel.add(emailText);
-
-        JButton registerButton = new JButton("Register Student");
-        registerButton.setBounds(10, 80, 150, 25);
-        panel.add(registerButton);
-
-        registerButton.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                addStudent(nameText.getText(), emailText.getText());
-                JOptionPane.showMessageDialog(null, "Student Registered: " + nameText.getText());
+        if (student != null && course != null) {
+            enrollments.add(new Enrollment(student, course));
+            displayArea.append("Enrolled: " + student.getName() + " in " + course.getTitle() + "\n");
+        } else {
+            if (student == null) {
+                JOptionPane.showMessageDialog(null, "Student not found. Please register the student first.");
             }
-        });
+            if (course == null) {
+                JOptionPane.showMessageDialog(null, "Course not found. Please add the course first.");
+            }
+        }
 
+        studentIdField.setText("");
+        courseCodeField.setText("");
+    }
+
+    private Student findStudent(String id) {
+        return students.stream().filter(s -> s.getId().equals(id)).findFirst().orElse(null);
+    }
+
+    private Course findCourse(String code) {
+        return courses.stream().filter(c -> c.getCode().equals(code)).findFirst().orElse(null);
     }
 
     public static void main(String[] args) {
-        StudentManagementSystem sms = new StudentManagementSystem();
-        sms.createAndShowGUI();
+        SwingUtilities.invokeLater(StudentManagementSystem::new);
     }
 }
-
